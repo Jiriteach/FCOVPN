@@ -1,5 +1,8 @@
-# FCOVPN
-FortiClient VPN Application for MacOS
+![alt text](https://github.com/Jiriteach/FCOVPN/blob/d4f3332bc284a89a4f9d41c86cd1d9559e4324b9/screenshots/Screen%20Shot%202022-02-02%20at%2022.38.42.png?raw=true)
+
+# FortiClient VPN Application for MacOS
+
+![alt text](https://github.com/Jiriteach/FCOVPN/blob/main/screenshots/Screen%20Shot%202022-02-02%20at%2022.39.08.png?raw=true?raw=true)
 
 * Based on Xbar - https://github.com/matryer/xbar
 * Based on OpenFortiVPN - https://github.com/adrienverge/openfortivpn
