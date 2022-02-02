@@ -13,7 +13,7 @@ Xbar allows you to pipe the output from any script/program in your MacOS menu ba
 ## OpenFortiVPN
 OpenFortiVPN is a client for PPP+SSL VPN  services. It spawns a pppd process and operates the communication between the gateway and this process.
 
-## Usage
+## Setup/Installation & Usage 
 Install OpenFortiVPN using Homebrew - https://formulae.brew.sh/formula/openfortivpn or as per the instructions here - https://github.com/adrienverge/openfortivpn. Confirm that OpenFortiVPN is working via TerminalA AND sudo commands to invoke OpenFortiVPN can be invoked without permission.
 
 Install Xbar and add-in the plugin.
