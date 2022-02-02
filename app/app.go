@@ -9,6 +9,9 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+	"strings"	
+   	"os/exec"
+   	"bytes"
 
 	"github.com/pkg/errors"
 	"github.com/wailsapp/wails/v2/pkg/mac"
@@ -104,33 +107,33 @@ func newApp() (*app, error) {
 			Label: "Browser",
 			SubMenu: menu.NewMenuFromItems(
 				menu.Text("Refresh", keys.CmdOrCtrl("r"), app.onBrowserRefreshMenuClicked),
-				menu.Text("Clear cache and refresh", keys.Combo("r", keys.CmdOrCtrlKey, keys.ShiftKey), app.onBrowserHardRefreshMenuClicked),
+				menu.Text("Clear Cache & Refresh", keys.Combo("r", keys.CmdOrCtrlKey, keys.ShiftKey), app.onBrowserHardRefreshMenuClicked),
 			),
 		},
 	)
 	app.contextMenus = []*menu.ContextMenu{
 		menu.NewContextMenu("refreshContextMenu", menu.NewMenuFromItems(
-			menu.Text("Refresh page data", nil, app.onBrowserHardRefreshMenuClicked),
-			menu.Text("Refresh plugins", nil, app.onPluginsRefreshAllMenuClicked),
+			menu.Text("Refresh Page Data", nil, app.onBrowserHardRefreshMenuClicked),
+			menu.Text("Refresh Plugins", nil, app.onPluginsRefreshAllMenuClicked),
 			menu.Text("Clear Cache", nil, app.onClearCacheMenuClicked),
 		)),
 	}
 
 	app.appUpdatesMenu = &menu.MenuItem{
 		Type:  menu.TextType,
-		Label: "Check for updates…",
+		Label: "Check For Updates ...",
 		Click: app.onCheckForUpdatesMenuClick,
 	}
 
 	app.autoupdateMenu = &menu.MenuItem{
-		Label:   "Update automatically",
+		Label:   "Update Automatically",
 		Type:    menu.CheckboxType,
 		Checked: app.settings.AutoUpdate,
 		Click:   app.updateAutoupdate,
 	}
 
 	app.startsAtLoginMenu = &menu.MenuItem{
-		Label:   "Start at Login",
+		Label:   "Start At Login",
 		Type:    menu.CheckboxType,
 		Checked: false,
 		Click:   app.updateStartOnLogin,
@@ -140,7 +143,7 @@ func newApp() (*app, error) {
 		if app.Verbose {
 			log.Println("start at login:", err)
 		}
-		app.startsAtLoginMenu.Label = "Start at Login"
+		app.startsAtLoginMenu.Label = "Start At Login"
 		app.startsAtLoginMenu.Disabled = true
 	} else {
 		app.startsAtLoginMenu.Checked = startsAtLogin
@@ -158,7 +161,7 @@ func newApp() (*app, error) {
 	app.PluginsService = NewPluginsService(client, "https://xbarapp.com/docs/plugins/")
 	app.PluginsService.OnRefresh = app.RefreshAll
 	app.defaultTrayMenu = &menu.TrayMenu{
-		Label: "xbar",
+		Label: "FCOVPN",
 		Menu:  app.newXbarMenu(nil, false),
 	}
 	return app, nil
@@ -276,7 +279,7 @@ func (app *app) onMenuDidClose() {
 func (app *app) updateStartOnLogin(data *menu.CallbackData) {
 	err := mac.StartAtLogin(data.MenuItem.Checked)
 	if err != nil {
-		app.startsAtLoginMenu.Label = "Start at Login unavailable"
+		app.startsAtLoginMenu.Label = "Start At Login Unavailable"
 		app.startsAtLoginMenu.Disabled = true
 	}
 	// We need to refresh all as the menuitem is used in multiple places.
@@ -318,7 +321,7 @@ func (app *app) onErr(err string) {
 	errorMenu.Append(menu.Separator())
 	errorMenu.Merge(app.newXbarMenu(nil, false))
 	app.defaultTrayMenu = &menu.TrayMenu{
-		Label: "⚠️ xbar",
+		Label: "⚠️ FCOVPN",
 		Menu:  errorMenu,
 	}
 	app.runtime.Menu.SetTrayMenu(app.defaultTrayMenu)
@@ -348,17 +351,17 @@ func (app *app) newXbarMenu(plugin *plugins.Plugin, asSubmenu bool) *menu.Menu {
 	}
 	items = append(items, &menu.MenuItem{
 		Type:        menu.TextType,
-		Label:       "Refresh all",
+		Label:       "Refresh All",
 		Accelerator: keys.Combo("r", keys.CmdOrCtrlKey, keys.ShiftKey),
 		Click:       app.onPluginsRefreshAllMenuClicked,
 	})
 	if plugin != nil {
-		items = append(items, menu.Text("Run in terminal…", keys.CmdOrCtrl("t"), func(_ *menu.CallbackData) {
+		items = append(items, menu.Text("Run In Terminal ...", keys.CmdOrCtrl("t"), func(_ *menu.CallbackData) {
 			err := plugin.RunInTerminal(app.settings.Terminal.AppleScriptTemplate3)
 			if err != nil {
 				_, err2 := app.runtime.Dialog.Message(&dialog.MessageDialog{
 					Type:         dialog.ErrorDialog,
-					Title:        "Run in terminal",
+					Title:        "Run In Terminal",
 					Message:      err.Error(),
 					Buttons:      []string{"OK"},
 					CancelButton: "OK",
@@ -375,7 +378,7 @@ func (app *app) newXbarMenu(plugin *plugins.Plugin, asSubmenu bool) *menu.Menu {
 	if plugin != nil {
 		items = append(items, &menu.MenuItem{
 			Type:        menu.TextType,
-			Label:       "Open plugin…",
+			Label:       "Open Plugin ...",
 			Accelerator: keys.CmdOrCtrl("e"),
 			Click: func(_ *menu.CallbackData) {
 				app.runtime.Window.Show()
@@ -392,36 +395,46 @@ func (app *app) newXbarMenu(plugin *plugins.Plugin, asSubmenu bool) *menu.Menu {
 	}
 	items = append(items, &menu.MenuItem{
 		Type:        menu.TextType,
-		Label:       "Plugin browser…",
+		Label:       "Plugin Browser ...",
 		Accelerator: keys.CmdOrCtrl("p"),
 		Click:       app.onPluginsMenuClicked,
 	})
 	items = append(items, &menu.MenuItem{
 		Type:  menu.TextType,
-		Label: "Open plugin folder…",
+		Label: "Open Plugin Folder ...",
 		Click: app.onOpenPluginsFolderClicked,
 	})
 	items = append(items, menu.Separator())
 	items = append(items, &menu.MenuItem{
 		Type:     menu.TextType,
-		Label:    fmt.Sprintf("xbar (%s)", version),
+		Label:    fmt.Sprintf("FCOVPN (%s)", strings.ToUpper(version)),
 		Disabled: true,
 	})
 	items = append(items, app.appUpdatesMenu)
 	items = append(items, app.autoupdateMenu)
 	items = append(items, app.startsAtLoginMenu)
-	items = append(items, menu.Separator())
-	items = append(items, &menu.MenuItem{
-		Type:        menu.TextType,
-		Label:       "Quit xbar",
-		Accelerator: keys.CmdOrCtrl("q"),
-		Click:       app.onQuitMenuClicked,
-	})
+	
+	//items = append(items, menu.Separator())
+	
+	//items = append(items, &menu.MenuItem{
+	//	Type:        menu.TextType,
+	//	Label:       "Quit FCOVPN",
+	//	Accelerator: keys.CmdOrCtrl("q"),
+	//	Click:       app.onQuitMenuClicked,
+	//})
+	
 	if asSubmenu {
 		m := menu.NewMenuFromItems(
-			menu.SubMenu("xbar", &menu.Menu{
+			menu.SubMenu("Preferences", &menu.Menu{
 				Items: items,
 			}),
+			menu.Separator(),
+			&menu.MenuItem{
+				Type:        menu.TextType,
+				Label:       "Quit FCOVPN",
+				Accelerator: keys.CmdOrCtrl("q"),
+				Click:       app.onQuitMenuClicked,
+			},
 		)
 		return m
 	}
@@ -431,7 +444,7 @@ func (app *app) newXbarMenu(plugin *plugins.Plugin, asSubmenu bool) *menu.Menu {
 
 func (app *app) createDefaultMenus() {
 	app.defaultTrayMenu = &menu.TrayMenu{
-		Label: "xbar",
+		Label: "FCOVPN",
 		Menu:  app.newXbarMenu(nil, false),
 	}
 }
@@ -445,7 +458,61 @@ func (app *app) onOpenPluginsFolderClicked(_ *menu.CallbackData) {
 }
 
 func (app *app) onQuitMenuClicked(_ *menu.CallbackData) {
+
+	//Work In Progress
+	/*
+	arguments := []string{}
+	arguments = append(arguments, "ifconfig")
+	arguments = append(arguments, "|")
+    arguments = append(arguments, "egrep")
+    arguments = append(arguments, "-A1")
+    arguments = append(arguments, "ppp0")
+    arguments = append(arguments, "|")
+    arguments = append(arguments, "grep")
+    arguments = append(arguments, "inet")
+
+	cmd := exec.Command("sudo", arguments...)
+	
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	
+	err := cmd.Run()
+	
+	if err != nil {
+    	fmt.Println("Error: " + fmt.Sprint(err) + ": " + stderr.String())
+    	return
+	} else {
+		fmt.Println("OK: " + stdout.String())
+	}
+	*/
+	
+	arguments1 := []string{}
+	arguments1 = append(arguments1, "killall")
+    arguments1 = append(arguments1, "-2")
+    arguments1 = append(arguments1, "openfortivpn")
+	
+	cmd1 := exec.Command("sudo", arguments1...)
+		
+	var stdout1 bytes.Buffer
+	var stderr1 bytes.Buffer
+	
+	cmd1.Stdout = &stdout1
+	cmd1.Stderr = &stderr1
+	err1 := cmd1.Run()
+	
+	if err1 != nil {
+    	fmt.Println("Error: " + fmt.Sprint(err1) + ": " + stderr1.String())
+    	//return
+	}
+	
+	fmt.Println("OK: " + stdout1.String())
+	
+	app.RefreshAll()
 	app.runtime.Quit()
+	
 }
 
 func (app *app) onPluginsRefreshMenuClicked(_ *menu.CallbackData, p *plugins.Plugin) {
@@ -485,7 +552,7 @@ func (app *app) clearCache(passive bool) {
 		}
 		_, err2 := app.runtime.Dialog.Message(&dialog.MessageDialog{
 			Type:         dialog.ErrorDialog,
-			Title:        "Clear cache failed",
+			Title:        "Clear Cache Failed",
 			Message:      err.Error(),
 			Buttons:      []string{"OK"},
 			CancelButton: "OK",
@@ -501,8 +568,8 @@ func (app *app) clearCache(passive bool) {
 	}
 	_, err2 := app.runtime.Dialog.Message(&dialog.MessageDialog{
 		Type:         dialog.InfoDialog,
-		Title:        "Cache cleared",
-		Message:      "The local cache was successfully cleared.",
+		Title:        "Cache Cleared",
+		Message:      "Local Cache Successfully Cleared.",
 		Buttons:      []string{"OK"},
 		CancelButton: "OK",
 	})
@@ -662,7 +729,7 @@ func (app *app) checkForUpdates(passive bool) {
 		if !passive {
 			_, err := app.runtime.Dialog.Message(&dialog.MessageDialog{
 				Type:         dialog.ErrorDialog,
-				Title:        "Update check failed",
+				Title:        "Update Check Failed",
 				Message:      err.Error(),
 				Buttons:      []string{"OK"},
 				CancelButton: "OK",
@@ -682,8 +749,8 @@ func (app *app) checkForUpdates(passive bool) {
 		if !passive {
 			_, err := app.runtime.Dialog.Message(&dialog.MessageDialog{
 				Type:         dialog.InfoDialog,
-				Title:        "You're up to date",
-				Message:      fmt.Sprintf("%s is the latest version.", latest.TagName),
+				Title:        "Latest Version Installed ...",
+				Message:      fmt.Sprintf("%s", strings.ToUpper(latest.TagName)),
 				Buttons:      []string{"OK"},
 				CancelButton: "OK",
 			})
@@ -700,14 +767,14 @@ func (app *app) checkForUpdates(passive bool) {
 		// old - do a soft prompt.
 		if passive && latest.CreatedAt.After(time.Now().Add(0-oneWeek)) {
 			// Update menu text
-			app.appUpdatesMenu.Label = "Install " + latest.TagName + "…"
+			app.appUpdatesMenu.Label = "Install " + strings.ToUpper(latest.TagName) + " ..."
 			app.refreshMenus()
 			return
 		}
 		response, err := app.runtime.Dialog.Message(&dialog.MessageDialog{
 			Type:          dialog.QuestionDialog,
-			Title:         "Update xbar?",
-			Message:       fmt.Sprintf("xbar %s is now available (you have %s).\n\nWould you like to update?", latest.TagName, u.CurrentVersion),
+			Title:         "Update FCOVPN?",
+			Message:       fmt.Sprintf("FCOVPN %s Available (%s Installed).\n\nUpdate?", strings.ToUpper(latest.TagName), strings.ToUpper(u.CurrentVersion)),
 			Buttons:       []string{"Update", "Later"},
 			DefaultButton: "Update",
 			CancelButton:  "Later",
@@ -735,8 +802,8 @@ func (app *app) checkForUpdates(passive bool) {
 		if !passive {
 			_, err := app.runtime.Dialog.Message(&dialog.MessageDialog{
 				Type:         dialog.InfoDialog,
-				Title:        "Update successful",
-				Message:      "Please restart xbar for the changes to take effect.",
+				Title:        "Update Successful",
+				Message:      "Restart FCOVPN ...",
 				Buttons:      []string{"OK"},
 				CancelButton: "OK",
 			})
@@ -755,8 +822,8 @@ func (app *app) checkForUpdates(passive bool) {
 		if !passive {
 			_, err := app.runtime.Dialog.Message(&dialog.MessageDialog{
 				Type:         dialog.InfoDialog,
-				Title:        "Update successful",
-				Message:      "Please restart xbar for the changes to take effect.",
+				Title:        "Update Successful",
+				Message:      "Restart FCOVPN ...",
 				Buttons:      []string{"OK"},
 				CancelButton: "OK",
 			})
