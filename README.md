@@ -21,8 +21,8 @@ Install Xbar and add-in the plugin.
 -- Run the application and add in the plugin.
 -- Update the plugin parameters to suit your connection.
 
-### Re-compiling Xbar
----------------------
+### Reference Notes RE - compiling Xbar
+---------------------------------------
 Based on - https://wails.app/
 
 Requires - 
