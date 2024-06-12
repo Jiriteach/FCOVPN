@@ -17,3 +17,5 @@ brew install openfortivpn
 Once installed - follow the instructions from here to setup openfortivpn and make sure VPN is able to connect using the client via terminal - https://github.com/adrienverge/openfortivpn.
 
 The FCOVPN client provides a MacOS menu bar which can easily be configured to call scripts. While xbar can be used to call many scripts - this has been specifically configured just for FortiClient VPN. 
+
+The package is a complied vesion of the FCOVPN client. This can be extracted to `/applications` and run. Included is the `openfortivpn` plugin. Configuration can be found here - `https://github.com/jiriteach/fcovpn/blob/main/releases/plugin/001-openfortivpn.sh`. Check the parameters and connect. 
